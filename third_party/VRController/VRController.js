@@ -309,7 +309,7 @@ THREE.VRController.verbosity = 0;//0.5;
 //  and have some connection / disconnection handlers.
 
 THREE.VRController.controllers = {};
-THREE.VRController.onGamepadConnect = function( gamepad ){
+THREE.VRController.onGamepadConnect = function( gamepad, index ){
 
 
 	//  Let’s create a new controller object
@@ -325,7 +325,7 @@ THREE.VRController.onGamepadConnect = function( gamepad ){
 	//  controllers that we know need updating, and by using the gamepad.index
 	//  as the key we also know which gamepads have already been found.
 
-	scope.controllers[ gamepad.index ] = controller;
+	scope.controllers[ index ] = controller;
 
 
 	//  Let’s give the controller a little rumble; some haptic feedback to
@@ -347,7 +347,7 @@ THREE.VRController.onGamepadConnect = function( gamepad ){
 
 	}, 500 );
 }
-THREE.VRController.onGamepadDisconnect = function( gamepad ){
+THREE.VRController.onGamepadDisconnect = function( index ){
 
 
 	//  We need to find the controller that holds the reference to this gamepad.
@@ -359,11 +359,11 @@ THREE.VRController.onGamepadDisconnect = function( gamepad ){
 
 	var
 	scope = THREE.VRController,
-	controller = scope.controllers[ gamepad.index ];
+	controller = scope.controllers[ index ];
 
 	if( scope.verbosity >= 0.5 ) console.log( 'vr controller disconnected', controller );
 	controller.dispatchEvent({ type: 'disconnected', controller: controller });
-	scope.controllers[ gamepad.index ] = undefined;
+	scope.controllers[ index ] = undefined;
 }
 
 
@@ -415,7 +415,7 @@ THREE.VRController.update = function(){
 
 			if( gamepad.pose.orientation !== null || gamepad.pose.position !== null ){
 
-				if( this.controllers[ i ] === undefined ) THREE.VRController.onGamepadConnect( gamepad );
+				if( this.controllers[ i ] === undefined ) THREE.VRController.onGamepadConnect( gamepad, i );
 				this.controllers[ i ].update();
 			}
 
@@ -425,8 +425,10 @@ THREE.VRController.update = function(){
 			//  equal true -- even if you power down the controller!
 			//  That doesn’t seem like the API’s intended behavior but it’s what I see in practice.
 
-			else if( this.controllers[ i ] !== undefined ) THREE.VRController.onGamepadDisconnect( gamepad );
+			else if( this.controllers[ i ] !== undefined ) THREE.VRController.onGamepadDisconnect( i );
 		}
+		// If the controller is disconnected and remove then we should update this.controllers accordingly
+		else if( this.controllers[ i ] !== undefined ) THREE.VRController.onGamepadDisconnect( i );
 	}
 }
 
